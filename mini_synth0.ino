@@ -3,6 +3,7 @@
 #define MOZZI_AUDIO_INPUT MOZZI_AUDIO_INPUT_STANDARD
 #define MOZZI_AUDIO_INPUT_PIN 0
 #define MOZZI_ANALOG_READ_RESOLUTION 10
+//#define MOZZI_AUDIO_MODE MOZZI_OUTPUT_2PIN_PWM
 
 #include <Mozzi.h>
 
@@ -57,15 +58,11 @@ void setup() {
   digitalWrite(9, 0);
   u8g2.begin();
 
-
-
   startMozzi();
-
 }
 
 void loop() {
   audioHook();
-
 }
 
 
@@ -78,7 +75,6 @@ void updateControl(){
   do {
     draw();
   } while( u8g2.nextPage() );
-
 }
 
 
@@ -120,6 +116,7 @@ void u8g2_prepare(void) {
   u8g2.setFontPosTop();
   u8g2.setFontDirection(0);
 }
+
 
 void draw(void) {
   u8g2_prepare();

@@ -1,0 +1,6 @@
+{
+    "configuration": "pnum=BLACK_F407VE,upload_method=swdMethod,xserial=generic,usb=none,xusb=FS,opt=osstd,dbg=none,rtlib=nano",
+    "board": "STMicroelectronics:stm32:GenF4",
+    "sketch": "mini_synth0.ino",
+    "output": "../build"
+}
