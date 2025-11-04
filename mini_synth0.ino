@@ -5,18 +5,51 @@
 #define MOZZI_ANALOG_READ_RESOLUTION 10
 //#define MOZZI_AUDIO_MODE MOZZI_OUTPUT_2PIN_PWM
 
+#define N_TIMBRES 3
+
 #include <Mozzi.h>
-
-#include <Oscil.h> // oscillator template
+#include <Oscil.h>
 #include <tables/sin2048_int8.h> // sine table for oscillator
-
 #include <ADSR.h>
-
 #include <ResonantFilter.h>
+#include "btn.h"
 
-#define KNOB_PIN 1
+#define KNOB_PIN1 1
+#define KNOB_PIN2 2
+#define KNOB_PIN3 3
+#define KNOB_PIN4 4
+#define KNOB_PIN5 5
 
-LowPassFilter lpf;
+#define KEY1 3
+#define KEY2 4
+#define KEY3 5
+#define KEY4 6
+#define KEY5 7
+
+
+
+byte filtype[N_TIMBRES];
+byte fil_param[N_TIMBRES];
+
+LowPassFilter lpf[N_TIMBRES];
+byte cutoff_freqs[N_TIMBRES];
+
+typedef struct {
+  byte attack;
+  byte decay;
+  byte sustain;
+  byte release;
+} ADSRparams;
+
+// todo
+// timbre ごとのコーラス系のバッファ
+
+
+byte disp_mode;
+
+
+ADSRparams adsr[N_TIMBRES];
+
 #define AUDIO_BUFF_SIZE 256
 int audiobuff[AUDIO_BUFF_SIZE];
 
@@ -45,6 +78,10 @@ ArduinoFFT<float> FFT = ArduinoFFT<float>(vReal, vImag, FFT_WINDOW_SIZE, MOZZI_A
 
 U8G2_SSD1306_128X64_NONAME_2_3W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* reset=*/ 8);
 
+Btn btn1;
+Btn btn2;
+Btn btn3;
+Btn btn4;
 
 
 // ---------------------------------------------------------------
@@ -58,6 +95,11 @@ void setup() {
   digitalWrite(9, 0);
   u8g2.begin();
 
+  btn1.begin(3);
+  btn2.begin(4);
+  btn3.begin(5);
+  btn4.begin(6);
+
   startMozzi();
 }
 
@@ -67,7 +109,12 @@ void loop() {
 
 
 void updateControl(){
-  byte cutoff_freq = mozziAnalogRead<8>(KNOB_PIN); // range 0-255
+  btn1.update();
+  btn2.update();
+  btn3.update();
+  btn4.update();
+
+  byte cutoff_freq = mozziAnalogRead<8>(KNOB_PIN1); // range 0-255
   lpf.setCutoffFreq(cutoff_freq);
   lpf.setResonance(220);
 
@@ -81,7 +128,7 @@ void updateControl(){
 AudioOutput updateAudio(){
   // subtracting 512 moves the unsigned audio data into 0-centred,
   // signed range required by all Mozzi units
-  int asig = mozziAnalogRead(KNOB_PIN)-512;
+  int asig = mozziAnalogRead(KNOB_PIN1)-512;
   asig = lpf.next(asig>>1);
   return MonoOutput::fromAlmostNBit(9, asig);
 }
@@ -137,35 +184,15 @@ void u8g2_line(uint8_t a) {
 // 波形描画
 // パラメータいじったとき、その波形を表示（発声を待たない）
 
-
-
 #if false
-// adsr こう使う
+以下メモ
+
+
 ADSR <MOZZI_CONTROL_RATE, MOZZI_AUDIO_RATE> envelope;
 
-void HandleNoteOn(byte channel, byte note, byte velocity) {
-  aSin.setFreq(mtof(float(note)));
   envelope.noteOn();
-}
-
-
-void HandleNoteOff(byte channel, byte note, byte velocity) {
   envelope.noteOff();
-}
-
-  envelope.setADLevels(255,64);
-  envelope.setTimes(50,200,10000,200); // 10000 is so the note will sustain 10 seconds unless a noteOff comes
-
-
-void updateControl(){
-  MIDI.read();
   envelope.update();
-}
-
-AudioOutput updateAudio(){
-  return MonoOutput::from16Bit(envelope.next() * aSin.next());
-}
 
 
 #endif
-
