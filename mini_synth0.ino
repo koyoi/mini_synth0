@@ -14,11 +14,12 @@
 #include <ResonantFilter.h>
 #include "btn.h"
 
-#define KNOB_PIN1 1
-#define KNOB_PIN2 2
-#define KNOB_PIN3 3
-#define KNOB_PIN4 4
-#define KNOB_PIN5 5
+#define KNOB_PIN1 0
+#define KNOB_PIN2 1
+#define KNOB_PIN3 2
+#define KNOB_PIN4 3
+#define KNOB_PIN5 4
+#define KNOB_PIN6 5
 
 #define KEY1 3
 #define KEY2 4
@@ -40,6 +41,10 @@ typedef struct {
   byte sustain;
   byte release;
 } ADSRparams;
+
+byte sel1,sel2;
+byte knob1, knob2, knob3, knob4;
+
 
 // todo
 // timbre ごとのコーラス系のバッファ
@@ -114,9 +119,14 @@ void updateControl(){
   btn3.update();
   btn4.update();
 
-  byte cutoff_freq = mozziAnalogRead<8>(KNOB_PIN1); // range 0-255
-  lpf.setCutoffFreq(cutoff_freq);
-  lpf.setResonance(220);
+  sel1 = mozziAnalogRead<8>(KNOB_PIN1) / 32; // channel, setting, ...
+  sel2 = mozziAnalogRead<8>(KNOB_PIN2); // range 0-255
+  knob1 = mozziAnalogRead<8>(KNOB_PIN3); // attack 
+  knob2 = mozziAnalogRead<8>(KNOB_PIN4); // decay
+  knob3 = mozziAnalogRead<8>(KNOB_PIN5); // release
+  knob4 = mozziAnalogRead<8>(KNOB_PIN6); // release
+
+  ui_update();
 
   u8g2.firstPage();  
   do {
@@ -124,15 +134,32 @@ void updateControl(){
   } while( u8g2.nextPage() );
 }
 
+void ui_update() {
+  // ボタン処理
+  if (btn1.click()) {
+    disp_mode = (disp_mode + 1) % 2;
+  }
+  if (btn2.click()) {
+    // something
+  }
+  if (btn3.click()) {
+    // something
+  }
+  if (btn4.click()) {
+    // something
+  }
+}
+
 
 AudioOutput updateAudio(){
   // subtracting 512 moves the unsigned audio data into 0-centred,
   // signed range required by all Mozzi units
   int asig = mozziAnalogRead(KNOB_PIN1)-512;
-  asig = lpf.next(asig>>1);
+  //asig = lpf.next(asig>>1);
+  fft_proc(asig);
+
   return MonoOutput::fromAlmostNBit(9, asig);
 }
-
 
 
 
